@@ -1,0 +1,6 @@
+@PrinterRepair.Repair.Presentation_HostAddress = http://localhost:5227
+
+GET {{PrinterRepair.Repair.Presentation_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

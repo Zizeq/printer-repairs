@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/Services/">
+    <Project Path="PrinterRepair.Diagnostics.Application/PrinterRepair.Diagnostics.Application.csproj" />
+    <Project Path="PrinterRepair.Diagnostics.Domain/PrinterRepair.Diagnostics.Domain.csproj" />
+    <Project Path="PrinterRepair.Diagnostics.Presentation/PrinterRepair.Diagnostics.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/Services/Invoicing/">
+    <Project Path="PrinterRepair.Invoicing.Application/PrinterRepair.Invoicing.Application.csproj" />
+    <Project Path="PrinterRepair.Invoicing.Domain/PrinterRepair.Invoicing.Domain.csproj" />
+    <Project Path="PrinterRepair.Invoicing.Presentation/PrinterRepair.Invoicing.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/Services/Repair/">
+    <Project Path="PrinterRepair.Repair.Application/PrinterRepair.Repair.Application.csproj" />
+    <Project Path="PrinterRepair.Repair.Domain/PrinterRepair.Repair.Domain.csproj" />
+    <Project Path="PrinterRepair.Repair.Presentation/PrinterRepair.Repair.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="PrinterRepair.Diagnostics.Application.Tests/PrinterRepair.Diagnostics.Application.Tests.csproj" />
+    <Project Path="PrinterRepair.Diagnostics.Domain.Tests/PrinterRepair.Diagnostics.Domain.Tests.csproj" />
+  </Folder>
+</Solution>
