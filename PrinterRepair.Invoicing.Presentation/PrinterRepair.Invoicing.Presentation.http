@@ -1,6 +1,0 @@
-@PrinterRepair.Invoicing.Presentation_HostAddress = http://localhost:5100
-
-GET {{PrinterRepair.Invoicing.Presentation_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

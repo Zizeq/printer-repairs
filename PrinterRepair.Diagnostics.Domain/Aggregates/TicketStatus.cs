@@ -5,5 +5,6 @@ public enum TicketStatus
     Submitted,
     EstimateIssued,
     EstimateApproved,
-    Rejected
+    Rejected,
+    Completed
 }

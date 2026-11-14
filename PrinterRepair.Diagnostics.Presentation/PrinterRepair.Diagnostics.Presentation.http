@@ -1,5 +1,6 @@
 @hostname = https://localhost:7209
 
+### 201 Created
 POST {{hostname}}/api/tickets
 Content-Type: application/json
 
@@ -8,11 +9,22 @@ Content-Type: application/json
   "printerModel": "HP LaserJet Pro"
 }
 
-###
+### 422 Unprocessable Entity
 POST {{hostname}}/api/tickets
 Content-Type: application/json
 
 {
   "clientId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-  "printerModel": "Brandthatdoesnotexist V1"
+  "printerModel": "ObsoleteBrand X1"
+}
+
+### Approve the estimate
+PUT {{hostname}}/api/tickets/13f8d289-245c-42b6-89ae-7882d1301ede/approve
+
+### Complete the repair
+PUT {{hostname}}/api/tickets/13f8d289-245c-42b6-89ae-7882d1301ede/complete
+Content-Type: application/json
+
+{
+  "passedCalibrationTest": true
 }

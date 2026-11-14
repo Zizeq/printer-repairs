@@ -36,4 +36,34 @@ public sealed class RepairTicketsController : ControllerBase
             return BadRequest(new { code = "validation.invalid_argument", message = ex.Message });
         }
     }
+
+    [HttpPut("{id}/approve")]
+    public async Task<IActionResult> ApproveEstimate(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _service.ApproveEstimateAsync(id, cancellationToken);
+            return Ok();
+        }
+        catch (DomainException ex)
+        {
+            return UnprocessableEntity(new { code = ex.Code, message = ex.Message });
+        }
+    }
+
+    [HttpPut("{id}/complete")]
+    public async Task<IActionResult> CompleteRepair(Guid id, [FromBody] CompleteRepairRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _service.CompleteRepairAsync(id, request.PassedCalibrationTest, cancellationToken);
+            return Ok();
+        }
+        catch (DomainException ex)
+        {
+            return UnprocessableEntity(new { code = ex.Code, message = ex.Message });
+        }
+    }
 }
+
+public record CompleteRepairRequest(bool PassedCalibrationTest);

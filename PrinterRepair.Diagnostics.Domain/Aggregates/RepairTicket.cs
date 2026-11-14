@@ -48,4 +48,21 @@ public sealed class RepairTicket
     {
         _notes.Add(new DiagnosticNote(text));
     }
+
+    public void ApproveEstimate()
+    {
+        if (Status == TicketStatus.Completed)
+            throw new InvalidOperationException("Cannot approve an estimate for an already completed repair.");
+
+        Status = TicketStatus.EstimateApproved;
+    }
+
+    public void CompleteRepair(bool passedCalibrationTest)
+    {
+        if (!passedCalibrationTest)
+            throw new InvalidOperationException("Repair failed: Calibration test did not pass.");
+
+        Status = TicketStatus.Completed;
+    }
+
 }

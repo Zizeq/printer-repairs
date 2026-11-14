@@ -1,21 +1,28 @@
 <Solution>
-  <Folder Name="/Services/">
+  <Folder Name="/Services/" />
+  <Folder Name="/Services/Billing and Handover/">
+    <Project Path="PrinterRepair.Repair.Application/PrinterRepair.BAH.Application.csproj" />
+    <Project Path="PrinterRepair.Repair.Domain/PrinterRepair.BAH.Domain.csproj" />
+    <Project Path="PrinterRepair.Repair.Presentation/PrinterRepair.BAH.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/Services/Billing and Handover/Tests/">
+    <Project Path="PrinterRepair.BAH.Domain.Tests/PrinterRepair.BAH.Domain.Tests.csproj" Id="bb126b35-ead8-4bf7-910f-393a2f6441e9" />
+  </Folder>
+  <Folder Name="/Services/Diagnostics and Repair/">
     <Project Path="PrinterRepair.Diagnostics.Application/PrinterRepair.Diagnostics.Application.csproj" />
     <Project Path="PrinterRepair.Diagnostics.Domain/PrinterRepair.Diagnostics.Domain.csproj" />
     <Project Path="PrinterRepair.Diagnostics.Presentation/PrinterRepair.Diagnostics.Presentation.csproj" />
   </Folder>
-  <Folder Name="/Services/Invoicing/">
-    <Project Path="PrinterRepair.Invoicing.Application/PrinterRepair.Invoicing.Application.csproj" />
-    <Project Path="PrinterRepair.Invoicing.Domain/PrinterRepair.Invoicing.Domain.csproj" />
-    <Project Path="PrinterRepair.Invoicing.Presentation/PrinterRepair.Invoicing.Presentation.csproj" />
-  </Folder>
-  <Folder Name="/Services/Repair/">
-    <Project Path="PrinterRepair.Repair.Application/PrinterRepair.Repair.Application.csproj" />
-    <Project Path="PrinterRepair.Repair.Domain/PrinterRepair.Repair.Domain.csproj" />
-    <Project Path="PrinterRepair.Repair.Presentation/PrinterRepair.Repair.Presentation.csproj" />
-  </Folder>
-  <Folder Name="/Tests/">
+  <Folder Name="/Services/Diagnostics and Repair/Tests/">
     <Project Path="PrinterRepair.Diagnostics.Application.Tests/PrinterRepair.Diagnostics.Application.Tests.csproj" />
     <Project Path="PrinterRepair.Diagnostics.Domain.Tests/PrinterRepair.Diagnostics.Domain.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Services/Identification/">
+    <Project Path="PrinterRepair.Identification.Application/PrinterRepair.Identification.Application.csproj" />
+    <Project Path="PrinterRepair.Identification.Domain/PrinterRepair.Identification.Domain.csproj" />
+    <Project Path="PrinterRepair.Identification.Presentation/PrinterRepair.Identification.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/Services/Identification/Tests/">
+    <Project Path="PrinterRepair.Identification.Domain.Tests/PrinterRepair.Identification.Domain.Tests.csproj" Id="5a5c8ceb-bb03-4d66-af54-36c0840d57a7" />
   </Folder>
 </Solution>

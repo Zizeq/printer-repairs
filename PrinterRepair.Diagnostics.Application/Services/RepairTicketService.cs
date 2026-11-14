@@ -40,4 +40,28 @@ public sealed class RepairTicketService : IRepairTicketService
 
     private static RepairTicketDto MapToDto(RepairTicket ticket) =>
         new(ticket.Id, ticket.ClientId, ticket.PrinterModel, ticket.Status.ToString(), ticket.RepairCostEstimate);
+
+    public async Task<RepairTicketDto> ApproveEstimateAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var ticket = await _repository.GetByIdAsync(id, cancellationToken);
+        if (ticket is null)
+            throw new Exception("Ticket not found.");
+
+        ticket.ApproveEstimate();
+        await _repository.SaveAsync(ticket, cancellationToken);
+
+        return MapToDto(ticket);
+    }
+
+    public async Task<RepairTicketDto> CompleteRepairAsync(Guid id, bool passedCalibrationTest, CancellationToken cancellationToken = default)
+    {
+        var ticket = await _repository.GetByIdAsync(id, cancellationToken);
+        if (ticket is null)
+            throw new Exception("Ticket not found.");
+
+        ticket.CompleteRepair(passedCalibrationTest);
+        await _repository.SaveAsync(ticket, cancellationToken);
+
+        return MapToDto(ticket);
+    }
 }

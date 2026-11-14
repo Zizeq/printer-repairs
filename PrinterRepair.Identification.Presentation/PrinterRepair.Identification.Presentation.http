@@ -1,0 +1,19 @@
+@hostname = https://localhost:7090
+
+### Register a new client
+POST {{hostname}}/api/clients
+Content-Type: application/json
+
+{
+  "contactIdentifier": "NIP-1234567890",
+  "isPriorityB2B": true
+}
+
+### Assign a printer
+POST {{hostname}}/api/clients/3fa85f64-5717-4562-b3fc-2c963f66afa6/printers
+Content-Type: application/json
+
+{
+  "serialNumber": "SN-98765",
+  "printerModel": "ProPrint 2000"
+}

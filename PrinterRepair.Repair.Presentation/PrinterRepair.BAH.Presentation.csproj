@@ -11,12 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\PrinterRepair.Invoicing.Application\PrinterRepair.Invoicing.Application.csproj" />
-    <ProjectReference Include="..\PrinterRepair.Invoicing.Domain\PrinterRepair.Invoicing.Domain.csproj" />
+    <ProjectReference Include="..\PrinterRepair.Repair.Application\PrinterRepair.BAH.Application.csproj" />
   </ItemGroup>
 
 </Project>

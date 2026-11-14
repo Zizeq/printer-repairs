@@ -1,0 +1,18 @@
+@hostname = https://localhost:7140
+
+### Issue an invoice
+POST {{hostname}}/api/invoices
+Content-Type: application/json
+
+{
+  "repairTicketId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "repairCost": 150.00
+}
+
+### Pay the invoice
+PUT {{hostname}}/api/invoices/3fa85f64-5717-4562-b3fc-2c963f66afa6/pay
+Content-Type: application/json
+
+{
+  "paymentAmount": 150.00
+}

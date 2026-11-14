@@ -56,5 +56,32 @@ public class RepairTicketTests
         var ex = Assert.Throws<InvalidDiagnosticNoteException>(() => ticket.AddDiagnosticNote(""));
         Assert.Equal("repair.invalid_diagnostic_note", ex.Code);
     }
+    [Fact]
+    public void ApproveEstimate_WhenValid_ShouldChangeStatusToEstimateApproved()
+    {
+        var ticket = new RepairTicket(Guid.NewGuid(), "ValidModel");
+        ticket.ApproveEstimate();
 
+        Assert.Equal(TicketStatus.EstimateApproved, ticket.Status);
+    }
+
+    [Fact]
+    public void CompleteRepair_WhenCalibrationPasses_ShouldChangeStatusToCompleted()
+    {
+        var ticket = new RepairTicket(Guid.NewGuid(), "ValidModel");
+        ticket.CompleteRepair(true);
+
+        Assert.Equal(TicketStatus.Completed, ticket.Status);
+    }
+
+    [Fact]
+    public void CompleteRepair_WhenCalibrationFails_ShouldThrowException()
+    {
+        var ticket = new RepairTicket(Guid.NewGuid(), "ValidModel");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ticket.CompleteRepair(false));
+
+        Assert.Contains("Calibration test did not pass", exception.Message);
+    }
 }

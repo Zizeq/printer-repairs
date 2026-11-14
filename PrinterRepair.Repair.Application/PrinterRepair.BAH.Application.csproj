@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PrinterRepair.Invoicing.Domain\PrinterRepair.Invoicing.Domain.csproj" />
+    <ProjectReference Include="..\PrinterRepair.Repair.Domain\PrinterRepair.BAH.Domain.csproj" />
   </ItemGroup>
 
 </Project>
