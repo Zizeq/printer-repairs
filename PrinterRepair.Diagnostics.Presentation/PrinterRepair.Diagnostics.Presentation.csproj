@@ -8,11 +8,16 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.*">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PrinterRepair.Diagnostics.Application\PrinterRepair.Diagnostics.Application.csproj" />
     <ProjectReference Include="..\PrinterRepair.Diagnostics.Domain\PrinterRepair.Diagnostics.Domain.csproj" />
+    <ProjectReference Include="..\PrinterRepair.Diagnostics.Infrastructure\PrinterRepair.Diagnostics.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

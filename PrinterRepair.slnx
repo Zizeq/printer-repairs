@@ -25,4 +25,5 @@
   <Folder Name="/Services/Identification/Tests/">
     <Project Path="PrinterRepair.Identification.Domain.Tests/PrinterRepair.Identification.Domain.Tests.csproj" Id="5a5c8ceb-bb03-4d66-af54-36c0840d57a7" />
   </Folder>
+  <Project Path="PrinterRepair.Diagnostics.Infrastructure/PrinterRepair.Diagnostics.Infrastructure.csproj" />
 </Solution>

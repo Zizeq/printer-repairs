@@ -1,4 +1,7 @@
-﻿using PrinterRepair.Diagnostics.Domain.Entities;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using PrinterRepair.Diagnostics.Domain.Entities;
 using PrinterRepair.Diagnostics.Domain.Exceptions;
 
 namespace PrinterRepair.Diagnostics.Domain.Aggregates;
@@ -10,13 +13,18 @@ public sealed class RepairTicket
 
     private readonly List<DiagnosticNote> _notes = new();
 
-    public Guid Id { get; }
-    public Guid ClientId { get; }
-    public string PrinterModel { get; }
+    public Guid Id { get; private set; }
+    public Guid ClientId { get; private set; }
+    public string PrinterModel { get; private set; }
     public decimal? RepairCostEstimate { get; private set; }
     public TicketStatus Status { get; private set; }
 
     public IReadOnlyCollection<DiagnosticNote> Notes => _notes.AsReadOnly();
+
+    private RepairTicket()
+    {
+        PrinterModel = null!;
+    }
 
     public RepairTicket(Guid clientId, string printerModel)
     {
@@ -64,5 +72,4 @@ public sealed class RepairTicket
 
         Status = TicketStatus.Completed;
     }
-
 }

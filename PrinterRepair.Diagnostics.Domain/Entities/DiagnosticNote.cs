@@ -1,11 +1,17 @@
-﻿using PrinterRepair.Diagnostics.Domain.Exceptions;
+﻿using System;
+using PrinterRepair.Diagnostics.Domain.Exceptions;
 
 namespace PrinterRepair.Diagnostics.Domain.Entities;
 
 public sealed class DiagnosticNote
 {
-    public Guid Id { get; }
-    public string Text { get; }
+    public Guid Id { get; private set; }
+    public string Text { get; private set; }
+
+    private DiagnosticNote()
+    {
+        Text = null!;
+    }
 
     internal DiagnosticNote(string text)
     {
