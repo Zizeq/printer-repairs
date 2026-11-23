@@ -1,4 +1,4 @@
-@hostname = https://localhost:7209
+@hostname = http://localhost:5031
 
 ### 201 Created
 POST {{hostname}}/api/tickets
@@ -19,10 +19,10 @@ Content-Type: application/json
 }
 
 ### Approve the estimate
-PUT {{hostname}}/api/tickets/13f8d289-245c-42b6-89ae-7882d1301ede/approve
+PUT {{hostname}}/api/tickets/2e40d9c1-e183-4a72-bf48-4cef133035ee/approve
 
 ### Complete the repair
-PUT {{hostname}}/api/tickets/13f8d289-245c-42b6-89ae-7882d1301ede/complete
+PUT {{hostname}}/api/tickets/2e40d9c1-e183-4a72-bf48-4cef133035ee/complete
 Content-Type: application/json
 
 {

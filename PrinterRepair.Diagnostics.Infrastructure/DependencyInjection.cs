@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PrinterRepair.Diagnostics.Application.Repositories;
 using PrinterRepair.Diagnostics.Infrastructure.Persistence;
+using PrinterRepair.Diagnostics.Application.Ports;
+using PrinterRepair.Diagnostics.Infrastructure.Acl;
 using System;
 
 namespace PrinterRepair.Diagnostics.Infrastructure;
@@ -35,6 +37,20 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IRepairTicketRepository, Repositories.RepairTicketRepository>();
+
+        services.AddScoped<PartsSupplierTranslator>();
+        services.AddScoped(sp =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>();
+            var baseUrl = config["PartsSupplier:BaseUrl"] ?? "https://legacy-supplier.example.local/";
+            var httpClient = new HttpClient
+            {
+                BaseAddress = new Uri(baseUrl),
+                Timeout = TimeSpan.FromSeconds(30)
+            };
+            return new HttpPartsSupplierAdapter(httpClient);
+        });
+        services.AddScoped<IPartsSupplierPort, LegacyPartsSupplierAcl>();
 
         return services;
     }

@@ -72,4 +72,9 @@ public sealed class RepairTicket
 
         Status = TicketStatus.Completed;
     }
+    public void EnsureCanBeDeleted()
+    {
+        if (Status is TicketStatus.EstimateApproved or TicketStatus.Completed)
+            throw new RepairTicketDeletionForbiddenException(Id, Status.ToString());
+    }
 }
