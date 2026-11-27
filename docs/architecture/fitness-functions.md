@@ -80,8 +80,6 @@ flowchart TB
 
 ## `AGENTS.md` Rule Mirror
 
-Copy or synchronize the following rules in `/AGENTS.md` so AI coding assistants generate compliant code and `CleanArchitectureGuardTests` directly from this specification:
-
 * **FF-01:** Never add EF Core, ASP.NET Core, `System.Net.Http`, or message broker references to any `*.Domain` project.
 * **FF-02:** Never add `public set` to any property in `*.Domain`; mutate state exclusively through domain methods and keep all `DomainException` subclasses `sealed`.
 * **FF-03:** Never reference `*.Infrastructure` or `*.Presentation` from `*.Application`; declare all `*CommandHandler` and `*QueryHandler` classes as `internal sealed` and register them via an Application DI extension method.
