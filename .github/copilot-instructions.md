@@ -3,10 +3,12 @@
 If you're helping out with this repository, please read through these guidelines before writing or changing any code. This project follows Clean Architecture, DDD, and CQRS, and we use automated tests to keep those boundaries intact.
 
 ## 1. Where are the Design Docs?
-Don't guess class names, exceptions, or business rules. Everything is documented in `docs/architecture/`:
-- `aggregates-and-invariants.md` – Our Ubiquitous Language, Value Objects (`Money`, `PartQuantity`, `TaxId`, `PrinterModel`), strongly-typed IDs (`ClientAccountId`, `RegisteredPrinterId`, `RepairTicketId`, `SparePartsInventoryId`, `ServiceInvoiceId`), business invariants, and Given-When-Then scenarios.
-- `stateDiagram-*.md` – The lifecycle of `RepairTicket` and which operations are blocked in each state.
-- `context-map.md` – How `Identification`, `Diagnostics`, and `BAH` fit together, plus the exact port contracts and mapping tables for our Anti-Corruption Layer (ACL).
+Don't guess class names, exceptions, or business rules. Everything is documented in `docs/`:
+- `docs/architecture/aggregates-and-invariants.md` – Our Ubiquitous Language, Value Objects (`Money`, `PartQuantity`, `TaxId`, `PrinterModel`), strongly-typed IDs (`ClientAccountId`, `RegisteredPrinterId`, `RepairTicketId`, `SparePartsInventoryId`, `ServiceInvoiceId`), business invariants, and Given-When-Then scenarios.
+- `docs/architecture/stateDiagram-*.md` – The lifecycle of `RepairTicket` and which operations are blocked in each state.
+- `docs/architecture/context-map.md` – How `Identification`, `Diagnostics`, and `BAH` fit together, plus the exact port contracts and mapping tables for our Anti-Corruption Layer (ACL).
+- `docs/architecture/fitness-functions.md` – Automated architectural fitness functions (`FF-01`–`FF-07`), cross-service isolation rules, and contract versioning / Tolerant Reader policies.
+- `docs/contracts/openapi-bah.yaml` – OpenAPI 3.1 HTTP contract for the `BAH` microservice (`/api/v1/invoices/*`), including required `Idempotency-Key` headers and RFC 9457 `ProblemDetails` responses.
 
 Stick to the exact names defined in those files.
 
@@ -49,3 +51,11 @@ Each Bounded Context (`Diagnostics`, `BAH`, `Identification`) is split into 4 pr
 ## 7. Unit Testing (xUnit)
 - Stick to the `Arrange – Act – Assert` pattern and name tests clearly: `Method_WhenCondition_ShouldExpectedResult`.
 - Test real domain objects and ACL translators directly without mocking libraries like `Moq`. Avoid writing tests that just verify a mock returned what you told it to return.
+
+## 8. Architectural Fitness Function Rules (`FF-01`–`FF-07`)
+- **FF-01:** Never add EF Core, ASP.NET Core, `System.Net.Http`, or message broker references to any `*.Domain` project.
+- **FF-02:** Never add `public set` to any property in `*.Domain`; mutate state exclusively through domain methods and keep all `DomainException` subclasses `sealed`.
+- **FF-03:** Never reference `*.Infrastructure` or `*.Presentation` from `*.Application`; declare all `*CommandHandler` and `*QueryHandler` classes as `internal sealed`.
+- **FF-04:** Keep all external DTOs (`*_DTO`), translators, and adapters `internal sealed` inside `*.Infrastructure.Acl`; never expose them through ports in `*.Application`.
+- **FF-05:** Never add `<ProjectReference>` entries, namespace imports, cross-schema `FOREIGN KEY`s, or SQL `JOIN`s between `PrinterRepair.Diagnostics.*`, `PrinterRepair.BAH.*`, and `PrinterRepair.Identification.*`.
+- **FF-06 / FF-07:** Keep `PrinterRepair.BAH` controllers and `PrinterRepair.Diagnostics` HTTP adapters aligned with `docs/contracts/openapi-bah.yaml`, enforce `Idempotency-Key` on all `POST` endpoints, and run `dotnet test` after every edit.

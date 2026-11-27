@@ -7,7 +7,7 @@ namespace PrinterRepair.Diagnostics.Application.Features.RepairTickets.Commands;
 
 public sealed record IssueEstimateCommand(Guid TicketId, decimal EstimatedCost) : ICommand<RepairTicketDto>;
 
-public sealed class IssueEstimateCommandHandler : ICommandHandler<IssueEstimateCommand, RepairTicketDto>
+internal sealed class IssueEstimateCommandHandler : ICommandHandler<IssueEstimateCommand, RepairTicketDto>
 {
     private readonly IRepairTicketRepository _repository;
 

@@ -6,7 +6,7 @@ namespace PrinterRepair.Diagnostics.Application.Features.RepairTickets.Queries;
 
 public sealed record GetRepairTicketByIdQuery(Guid TicketId) : IQuery<RepairTicketDto?>;
 
-public sealed class GetRepairTicketByIdQueryHandler : IQueryHandler<GetRepairTicketByIdQuery, RepairTicketDto?>
+internal sealed class GetRepairTicketByIdQueryHandler : IQueryHandler<GetRepairTicketByIdQuery, RepairTicketDto?>
 {
     private readonly IRepairTicketRepository _repository;
 

@@ -1,0 +1,558 @@
+openapi: 3.1.0
+info:
+  title: PrinterRepair BAH (Billing & Handover) Microservice API
+  version: 1.0.0
+  description: >-
+    Public HTTP contract (Open Host Service / Published Language) of the
+    PrinterRepair.BAH.Presentation microservice. PrinterRepair.Diagnostics calls
+    this API after completing printer repairs to issue invoices, verify payment
+    status, and authorize hardware handover without cross-service code or database coupling.
+  contact:
+    name: PrinterRepair Architecture Team
+
+servers:
+  - url: http://localhost:5200
+    description: Local development environment (direct run)
+  - url: http://printerrepair-bah-api:8080
+    description: Docker Compose internal network (calls from PrinterRepair.Diagnostics)
+
+tags:
+  - name: Invoices
+    description: Service invoice issuance, status queries, payment recording, and hardware handover
+
+paths:
+  /api/v1/invoices:
+    post:
+      tags:
+        - Invoices
+      operationId: issueInvoice
+      summary: Issues a service invoice for a completed repair ticket
+      description: >-
+        Creates a new ServiceInvoice in the BAH context after Diagnostics completes
+        a repair and passes calibration. Idempotent when called with the same
+        Idempotency-Key header.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueInvoiceRequest'
+            examples:
+              completedLaserJetRepair:
+                summary: Completed HP LaserJet repair in PLN
+                value:
+                  repairTicketId: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                  clientId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  buyerTaxId: "5252344078"
+                  printerModel: "HP LaserJet Pro M404dn"
+                  totalAmount: 450.00
+                  currency: "PLN"
+                  diagnosticSummary: "Replaced fuser assembly and passed calibration test."
+      responses:
+        '201':
+          description: Service invoice issued successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInvoiceDto'
+              examples:
+                issuedInvoice:
+                  summary: Newly issued service invoice
+                  value:
+                    invoiceId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    repairTicketId: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                    clientId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    buyerTaxId: "5252344078"
+                    totalAmount: 450.00
+                    storageFeeAmount: 0.00
+                    currency: "PLN"
+                    status: "Issued"
+                    isPaid: false
+                    issuedAtUtc: "2026-11-27T10:15:00Z"
+                    paidAtUtc: null
+                    handedOverAtUtc: null
+        '400':
+          description: Contract input validation failed (invalid UUID, negative amount, malformed NIP or currency code, missing Idempotency-Key)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Referenced billing profile for the client was not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Idempotency conflict (same Idempotency-Key reused with different invoice parameters, or invoice already exists for this RepairTicketId)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Domain rule violation (e.g. unsupported billing currency or invalid NIP checksum)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: BAH persistence or dependent billing subsystem is temporarily unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+
+  /api/v1/invoices/{invoiceId}:
+    get:
+      tags:
+        - Invoices
+      operationId: getInvoiceById
+      summary: Retrieves the current status and balance of a service invoice
+      description: >-
+        Returns invoice details, payment status, applied storage fees (after the
+        14-day grace period), and handover timestamps.
+      parameters:
+        - $ref: '#/components/parameters/InvoiceIdPath'
+      responses:
+        '200':
+          description: Service invoice details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInvoiceDto'
+              examples:
+                paidInvoice:
+                  summary: Paid invoice awaiting hardware pickup
+                  value:
+                    invoiceId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    repairTicketId: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                    clientId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    buyerTaxId: "5252344078"
+                    totalAmount: 450.00
+                    storageFeeAmount: 0.00
+                    currency: "PLN"
+                    status: "Paid"
+                    isPaid: true
+                    issuedAtUtc: "2026-11-27T10:15:00Z"
+                    paidAtUtc: "2026-11-27T10:22:30Z"
+                    handedOverAtUtc: null
+        '400':
+          description: Invalid invoiceId path parameter format (must be a UUID)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: No service invoice found with the given invoiceId
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: BAH service is temporarily unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+
+  /api/v1/invoices/{invoiceId}/payments:
+    post:
+      tags:
+        - Invoices
+      operationId: recordInvoicePayment
+      summary: Authorizes and records payment for an issued service invoice
+      description: >-
+        Processes payment via the external payment gateway (Stripe Conformist adapter)
+        using a one-time payment token. Idempotent for repeated requests carrying the
+        same Idempotency-Key header.
+      parameters:
+        - $ref: '#/components/parameters/InvoiceIdPath'
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordInvoicePaymentRequest'
+            examples:
+              standardCardPayment:
+                summary: Full payment of a repair invoice in PLN
+                value:
+                  amount: 450.00
+                  currency: "PLN"
+                  paymentMethodToken: "tok_visa_printerrepair_8841"
+      responses:
+        '200':
+          description: Payment authorization processed (approved or declined by the gateway)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentConfirmationDto'
+              examples:
+                approvedPayment:
+                  summary: Approved gateway authorization
+                  value:
+                    paymentId: "f9e8d7c6-b5a4-3210-9876-543210fedcba"
+                    invoiceId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    authorized: true
+                    status: "Paid"
+                    gatewayReference: "pi_3Qx9PrinterRepair8841"
+                    failureCode: null
+                    processedAtUtc: "2026-11-27T10:22:30Z"
+        '400':
+          description: Input validation failed (missing Idempotency-Key, non-positive amount, invalid token length)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Service invoice does not exist
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Idempotency conflict (Idempotency-Key already used with a different payment payload)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Domain invariant violated (invoice already paid, cancelled, or payment amount does not match outstanding balance)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: External payment gateway is unavailable or timed out (Circuit Breaker open)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+
+  /api/v1/invoices/{invoiceId}/handovers:
+    post:
+      tags:
+        - Invoices
+      operationId: confirmHardwareHandover
+      summary: Authorizes and records physical handover of a repaired printer
+      description: >-
+        Enforces the BAH domain invariant that repaired hardware cannot be released
+        to the client until the invoice (including any overdue storage fee) is fully paid.
+      parameters:
+        - $ref: '#/components/parameters/InvoiceIdPath'
+        - $ref: '#/components/parameters/IdempotencyKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfirmHardwareHandoverRequest'
+            examples:
+              frontDeskPickup:
+                summary: Client pickup at the service desk
+                value:
+                  releasedByStaffId: "9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d"
+                  pickupRecipientName: "Jan Kowalski"
+                  handoverNotes: "Verified client ID and handed over power cable."
+      responses:
+        '200':
+          description: Hardware handover confirmed and invoice transitioned to HandedOver
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceInvoiceDto'
+              examples:
+                completedHandover:
+                  summary: Invoice after printer release
+                  value:
+                    invoiceId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    repairTicketId: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                    clientId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    buyerTaxId: "5252344078"
+                    totalAmount: 450.00
+                    storageFeeAmount: 0.00
+                    currency: "PLN"
+                    status: "HandedOver"
+                    isPaid: true
+                    issuedAtUtc: "2026-11-27T10:15:00Z"
+                    paidAtUtc: "2026-11-27T10:22:30Z"
+                    handedOverAtUtc: "2026-11-27T10:35:00Z"
+        '400':
+          description: Input validation failed (missing recipient name, invalid UUID, missing Idempotency-Key)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Service invoice does not exist
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Idempotency conflict (Idempotency-Key reused with different handover details)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '422':
+          description: Domain invariant violated (hardware release forbidden because invoice is unpaid or already handed over)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '503':
+          description: BAH service is temporarily unavailable
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+
+components:
+  parameters:
+    IdempotencyKeyHeader:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: >-
+        Unique UUID generated by the consumer (Diagnostics / API Gateway) for each
+        mutating POST operation. Prevents duplicate invoices, double charges, or
+        duplicate handover records on HTTP retries.
+      schema:
+        type: string
+        format: uuid
+
+    InvoiceIdPath:
+      name: invoiceId
+      in: path
+      required: true
+      description: Unique identifier of the ServiceInvoice aggregate (UUID)
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    IssueInvoiceRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - repairTicketId
+        - clientId
+        - buyerTaxId
+        - printerModel
+        - totalAmount
+        - currency
+      properties:
+        repairTicketId:
+          type: string
+          format: uuid
+          description: Reference to the completed RepairTicket in Diagnostics (no DB FK across services)
+        clientId:
+          type: string
+          format: uuid
+          description: Reference to the ClientAccount in Identification
+        buyerTaxId:
+          type: string
+          pattern: '^[0-9]{10}$'
+          description: Ten-digit Polish NIP without hyphens (TaxId Value Object)
+          examples:
+            - "5252344078"
+        printerModel:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: Snapshot of the repaired printer model for invoice line rendering
+        totalAmount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          maximum: 1000000.00
+          description: Approved final repair cost (Money.Amount Value Object)
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          description: Three-letter ISO-4217 currency code (Money.Currency Value Object)
+          examples:
+            - "PLN"
+        diagnosticSummary:
+          type:
+            - string
+            - 'null'
+          maxLength: 500
+          description: Optional technical summary copied onto the invoice document
+
+    RecordInvoicePaymentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - amount
+        - currency
+        - paymentMethodToken
+      properties:
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+          maximum: 1000000.00
+          description: Payment amount in major currency units (Money.Amount)
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+          description: Three-letter ISO-4217 currency code (Money.Currency)
+          examples:
+            - "PLN"
+        paymentMethodToken:
+          type: string
+          minLength: 8
+          maxLength: 128
+          description: One-time tokenized payment credential (raw card PAN is never transmitted)
+
+    ConfirmHardwareHandoverRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - releasedByStaffId
+        - pickupRecipientName
+      properties:
+        releasedByStaffId:
+          type: string
+          format: uuid
+          description: Identifier of the service desk employee releasing the printer
+        pickupRecipientName:
+          type: string
+          minLength: 2
+          maxLength: 120
+          description: Full name of the client or authorized representative picking up the printer
+        handoverNotes:
+          type:
+            - string
+            - 'null'
+          maxLength: 300
+          description: Optional pickup remarks (e.g. returned accessories)
+
+    ServiceInvoiceDto:
+      type: object
+      required:
+        - invoiceId
+        - repairTicketId
+        - clientId
+        - buyerTaxId
+        - totalAmount
+        - storageFeeAmount
+        - currency
+        - status
+        - isPaid
+        - issuedAtUtc
+      properties:
+        invoiceId:
+          type: string
+          format: uuid
+        repairTicketId:
+          type: string
+          format: uuid
+        clientId:
+          type: string
+          format: uuid
+        buyerTaxId:
+          type: string
+          pattern: '^[0-9]{10}$'
+        totalAmount:
+          type: number
+          format: decimal
+          minimum: 0.01
+        storageFeeAmount:
+          type: number
+          format: decimal
+          minimum: 0.00
+          description: Late pickup storage fee applied after the 14-day grace period
+        currency:
+          type: string
+          pattern: '^[A-Z]{3}$'
+        status:
+          $ref: '#/components/schemas/InvoiceStatus'
+        isPaid:
+          type: boolean
+        issuedAtUtc:
+          type: string
+          format: date-time
+        paidAtUtc:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        handedOverAtUtc:
+          type:
+            - string
+            - 'null'
+          format: date-time
+
+    PaymentConfirmationDto:
+      type: object
+      required:
+        - paymentId
+        - invoiceId
+        - authorized
+        - status
+        - processedAtUtc
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+        invoiceId:
+          type: string
+          format: uuid
+        authorized:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/InvoiceStatus'
+        gatewayReference:
+          type:
+            - string
+            - 'null'
+          description: External Stripe reference returned when authorization succeeds
+        failureCode:
+          type:
+            - string
+            - 'null'
+          description: Gateway decline code (e.g. bah.insufficient_funds), null on success
+        processedAtUtc:
+          type: string
+          format: date-time
+
+    InvoiceStatus:
+      type: string
+      enum:
+        - Issued
+        - Paid
+        - HandedOver
+        - StorageFeeApplied
+        - Cancelled
+
+    ProblemDetails:
+      type: object
+      description: Standard RFC 9457 HTTP error envelope used across all PrinterRepair microservices
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          examples:
+            - "https://printerrepair.local/errors/bah.invoice_unpaid_handover_forbidden"
+        title:
+          type: string
+        status:
+          type: integer
+          format: int32
+        detail:
+          type: string
+        instance:
+          type: string
+        errorCode:
+          type: string
+          description: Machine-readable domain exception code (DomainException.Code)

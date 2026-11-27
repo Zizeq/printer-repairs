@@ -5,7 +5,7 @@ namespace PrinterRepair.Diagnostics.Application.Features.RepairTickets.Commands;
 
 public sealed record DeleteRepairTicketCommand(Guid TicketId) : ICommand<bool>;
 
-public sealed class DeleteRepairTicketCommandHandler : ICommandHandler<DeleteRepairTicketCommand, bool>
+internal sealed class DeleteRepairTicketCommandHandler : ICommandHandler<DeleteRepairTicketCommand, bool>
 {
     private readonly IRepairTicketRepository _repository;
 

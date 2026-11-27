@@ -60,15 +60,18 @@ public sealed class RepairTicket
     public void ApproveEstimate()
     {
         if (Status == TicketStatus.Completed)
-            throw new InvalidOperationException("Cannot approve an estimate for an already completed repair.");
+            throw new InvalidRepairTicketStateException(Id, Status.ToString(), nameof(ApproveEstimate));
 
         Status = TicketStatus.EstimateApproved;
     }
 
     public void CompleteRepair(bool passedCalibrationTest)
     {
+        if (Status != TicketStatus.EstimateApproved)
+            throw new InvalidRepairTicketStateException(Id, Status.ToString(), nameof(CompleteRepair));
+
         if (!passedCalibrationTest)
-            throw new InvalidOperationException("Repair failed: Calibration test did not pass.");
+            throw new CalibrationFailedException(Id);
 
         Status = TicketStatus.Completed;
     }

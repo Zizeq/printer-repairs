@@ -7,7 +7,7 @@ namespace PrinterRepair.Diagnostics.Application.Features.RepairTickets.Commands;
 
 public sealed record CompleteRepairCommand(Guid TicketId, bool PassedCalibrationTest) : ICommand<RepairTicketDto>;
 
-public sealed class CompleteRepairCommandHandler : ICommandHandler<CompleteRepairCommand, RepairTicketDto>
+internal sealed class CompleteRepairCommandHandler : ICommandHandler<CompleteRepairCommand, RepairTicketDto>
 {
     private readonly IRepairTicketRepository _repository;
 

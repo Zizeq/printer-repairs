@@ -57,7 +57,7 @@ public static class DependencyInjection
 
     public static async Task InitializeDatabaseAsync(this IServiceProvider serviceProvider)
     {
-        using var scope = serviceProvider.CreateScope();
+        await using var scope = serviceProvider.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<DiagnosticsDbContext>();
 
         await DiagnosticsDataSeeder.SeedAsync(context);

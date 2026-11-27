@@ -66,22 +66,52 @@ public class RepairTicketTests
     }
 
     [Fact]
-    public void CompleteRepair_WhenCalibrationPasses_ShouldChangeStatusToCompleted()
+    public void ApproveEstimate_WhenAlreadyCompleted_ShouldThrowInvalidRepairTicketStateException()
     {
         var ticket = new RepairTicket(Guid.NewGuid(), "ValidModel");
+        ticket.ApproveEstimate();
+        ticket.CompleteRepair(true);
+
+        var ex = Assert.Throws<InvalidRepairTicketStateException>(() => ticket.ApproveEstimate());
+
+        Assert.Equal("diagnostics.invalid_ticket_state", ex.Code);
+        Assert.Equal(TicketStatus.Completed, ticket.Status);
+    }
+
+    [Fact]
+    public void CompleteRepair_WhenEstimateApprovedAndCalibrationPasses_ShouldChangeStatusToCompleted()
+    {
+        var ticket = new RepairTicket(Guid.NewGuid(), "ValidModel");
+        ticket.ApproveEstimate();
+
         ticket.CompleteRepair(true);
 
         Assert.Equal(TicketStatus.Completed, ticket.Status);
     }
 
     [Fact]
-    public void CompleteRepair_WhenCalibrationFails_ShouldThrowException()
+    public void CompleteRepair_WhenCalibrationFails_ShouldThrowCalibrationFailedExceptionAndKeepState()
+    {
+        var ticket = new RepairTicket(Guid.NewGuid(), "ValidModel");
+        ticket.ApproveEstimate();
+
+        var ex = Assert.Throws<CalibrationFailedException>(() =>
+            ticket.CompleteRepair(false));
+
+        Assert.Equal("diagnostics.calibration_failed", ex.Code);
+        Assert.Equal(ticket.Id, ex.TicketId);
+        Assert.Equal(TicketStatus.EstimateApproved, ticket.Status);
+    }
+
+    [Fact]
+    public void CompleteRepair_WhenTicketIsSubmitted_ShouldThrowInvalidRepairTicketStateException()
     {
         var ticket = new RepairTicket(Guid.NewGuid(), "ValidModel");
 
-        var exception = Assert.Throws<InvalidOperationException>(() =>
-            ticket.CompleteRepair(false));
+        var ex = Assert.Throws<InvalidRepairTicketStateException>(() =>
+            ticket.CompleteRepair(true));
 
-        Assert.Contains("Calibration test did not pass", exception.Message);
+        Assert.Equal("diagnostics.invalid_ticket_state", ex.Code);
+        Assert.Equal(TicketStatus.Submitted, ticket.Status);
     }
 }

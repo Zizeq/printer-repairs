@@ -7,7 +7,7 @@ namespace PrinterRepair.Diagnostics.Application.Features.RepairTickets.Commands;
 
 public sealed record CreateRepairTicketCommand(Guid ClientId, string PrinterModel) : ICommand<RepairTicketDto>;
 
-public sealed class CreateRepairTicketCommandHandler : ICommandHandler<CreateRepairTicketCommand, RepairTicketDto>
+internal sealed class CreateRepairTicketCommandHandler : ICommandHandler<CreateRepairTicketCommand, RepairTicketDto>
 {
     private readonly IRepairTicketRepository _repository;
 
